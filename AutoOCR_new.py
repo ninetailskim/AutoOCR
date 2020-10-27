@@ -116,22 +116,58 @@ class MainWindow(QMainWindow, WindowMixin):
 
         filelistLayout = QVBoxLayout()
         filelistLayout.setContentsMargins(0, 0, 0, 0)
-
         self.fileList = QListWidget()
         self.fileList.itemDoubleClicked.connect(self.fileitemDoubleClicked)
-
         filelistLayout.addWidget(self.fileList)
-
         fileListContainer = QWidget()
         fileListContainer.setLayout(filelistLayout)
-
         self.filedock = QDockWidget(getStr('fileList'), self)
         self.filedock.setObjectName(getStr('files'))
         self.filedock.setWidget(fileListContainer)
-
         self.addDockWidget(Qt.LeftDockWidgetArea, self.filedock)
-        
 
+        self.zoomWidget = ZoomWidget()
+        self.colorDialog = ColorDialog(parent=self)
+        self.canvas = Canvas(parent=self)
+        self.canvas.zoomRequest.connect(self.zoomRequest)
+        self.canvas.setDrawingShapeToSquare(settings.get(SETTING_DRAW_SQUARE, False))
+        scroll = QScrollArea()
+        scroll.setWidget(self.canvas)
+        scroll.setWidgetResizable(True)
+        self.scrollBars = {
+            Qt.Vertical: scroll.verticalScrollBar(),
+            Qt.Horizontal: scroll.horizontalScrollBar()
+        }
+        self.scrollArea = scroll
+        self.canvas.scrollRequest.connect(self.scrollRequest)
+        self.canvas.newShape.connect(self.newShape)
+        self.canvas.shapeMoved.connect(self.setDirty)
+        self.canvas.selectionChanged.connect(self.shapeSelectionChanged)
+        self.canvas.drawingPolygon.connect(self.toggleDrawingSensitive)
+        self.setCentralWidget(scroll)
+
+        
+        rightListLayout = QVBoxLayout()
+
+        self.addNewBboxBtn = QPushButton(getStr('addNewBbox'))
+        self.addNewBboxBtn.setEnabled(True)
+        self.addNewBboxBtn.clicked.connnect(self.createShape)
+        self.reLabelBtn = QPushButton(getStr('reLabel'))
+        self.reLabelBtn.setEnabled(True)
+        self.reLabelBtn.clicked.connect(self.reLabel)
+        rightUpLayout = QHBoxLayout()
+        rightUpLayout.addWidget(self.addNewBboxBtn)
+        rightUpLayout.addWidget(self.reLabelBtn)
+        
+    
+    def reLabel(self):
+        pass
+
+
+    def createShape(self):
+        assert self.beginner()
+        self.canvas.setEditing(False)
+        self.actions.create.setEnabled(False)
 
     def labelSelectionChanged(self):
         item = self.currentItem()
